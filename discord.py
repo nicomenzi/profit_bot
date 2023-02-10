@@ -20,7 +20,7 @@ async def profit(ctx, address: str, contract_address: str):
 
     user_id = ctx.author.id
 
-    generate_image(address, contract_address, user_id)
+    generate_image(address.lower(), contract_address.lower(), user_id)
 
     await ctx.followup.send(file=disnake.File(f'pil_text_font{user_id}.png'))
 
