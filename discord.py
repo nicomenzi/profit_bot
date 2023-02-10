@@ -1,6 +1,9 @@
 import disnake
 from disnake.ext import commands
-from disnake impor slash_commands
+from create_image import generate_image
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
 client = disnake.Client()
 
@@ -12,3 +15,15 @@ async def on_ready():
 
 
 @bot.slash_command()
+async def profit(ctx, address: str, contract_address: str):
+    await ctx.response.defer()
+
+    user_id = ctx.author.id
+
+    generate_image(address, contract_address, user_id)
+
+    await ctx.followup.send(file=disnake.File(f'pil_text_font{user_id}.png'))
+
+bot.run(os.getenv("DISCORD_TOKEN"))
+
+
