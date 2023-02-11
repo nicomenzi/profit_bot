@@ -1,6 +1,7 @@
 import requests
 from dotenv import load_dotenv
 import os
+from models import User, Wallet
 load_dotenv()
 
 
