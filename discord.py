@@ -3,10 +3,12 @@ from disnake.ext import commands
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from create_image import generate_image
+from create_image import generate_image, generate_image_time
 from dotenv import load_dotenv
 from models import User, Wallet, Base
+from get_data import get_tx, get_time_profit
 import os
+import time
 load_dotenv()
 
 client = disnake.Client()
@@ -24,15 +26,36 @@ async def on_ready():
 
 
 @bot.slash_command()
-async def profit(ctx, address: str, contract_address: str):
-    await ctx.response.defer()
+async def profit(ctx, contract_address: str):
+    try:
+        await ctx.response.defer()
 
-    user_id = ctx.author.id
+        user_id = ctx.author.id
 
 
-    generate_image(address.lower(), contract_address.lower(), user_id)
+        count_buy = 0
+        count_sell = 0
+        profit = 0
 
-    await ctx.followup.send(file=disnake.File(f'pil_text_font{user_id}.png'))
+        # Get wallets for user from mysql database
+        wallets = session.query(Wallet).filter_by(user_id=user_id).all()
+        if len(wallets) == 0:
+            await ctx.followup.send("You have no wallets added")
+        else:
+            # Get all transactions for all wallets
+            for wallet in wallets:
+                address = wallet.address
+                project_name, count_buy_temp, count_sell_temp, profit_temp = get_tx(address, contract_address.lower())
+                count_buy += count_buy_temp
+                count_sell += count_sell_temp
+                profit += profit_temp
+
+            generate_image(project_name, count_buy, count_sell, profit, user_id)
+
+            await ctx.followup.send(file=disnake.File(f'pil_text_font{user_id}.png'))
+    except Exception as e:
+        print(e)
+        await ctx.followup.send("Something went wrong")
 
 
 @bot.slash_command()
@@ -86,9 +109,38 @@ async def list_wallets(ctx):
 
 
 @bot.slash_command()
-async def sevendayprofit(ctx, address: str):
+async def profit_history(ctx, address: str, days: int):
     await ctx.response.defer()
+
+    count_buy = 0
+    count_sell = 0
+    profit = 0
+
+    user_id = ctx.author.id
+
     # get 7d profit
+    timestamp = int(time.time())
+    x_days_ago = timestamp - days * 24 * 60 * 60
+
+    users = session.query(User).filter_by(user_id=ctx.author.id).all()
+    if len(users) == 0:
+        await ctx.followup.send("You don't have any wallets")
+    else:
+        wallets = session.query(Wallet).filter_by(address=address.lower()).all()
+        if len(wallets) == 0:
+            await ctx.followup.send("You don't have any wallets")
+
+        else:
+            for wallet in wallets:
+                address = wallet.address
+                count_buy_temp, count_sell_temp, profit_temp = get_time_profit(address, x_days_ago)
+                count_buy += count_buy_temp
+                count_sell += count_sell_temp
+                profit += profit_temp
+
+            generate_image_time(count_buy, count_sell, profit, user_id, x_days_ago)
+
+
 
     await ctx.followup.send("7d profit listed")
 
@@ -96,6 +148,8 @@ async def sevendayprofit(ctx, address: str):
 async def fifteendayprofit(ctx, address: str):
     await ctx.response.defer()
     # get 15d profit
+    timestamp = int(time.time())
+    seven_days_ago = timestamp - 15 * 24 * 60 * 60
 
     await ctx.followup.send("15d profit listed")
 
@@ -103,6 +157,8 @@ async def fifteendayprofit(ctx, address: str):
 async def thirtydayprofit(ctx, address: str):
     await ctx.response.defer()
     # get 30d profit
+    timestamp = int(time.time())
+    seven_days_ago = timestamp - 30 * 24 * 60 * 60
 
     await ctx.followup.send("30d profit listed")
 

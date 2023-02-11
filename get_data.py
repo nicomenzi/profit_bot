@@ -1,6 +1,8 @@
 import requests
 from dotenv import load_dotenv
 import os
+import calendar
+import time
 from models import User, Wallet
 load_dotenv()
 
@@ -19,19 +21,41 @@ def remove_duplicates(arr, attr):
     return result
 
 def get_tx(address, contract_address):
+    # Get wallets for user from mysql database
+
+
+
     # Define the API key once and use it for all requests
     apikey = os.getenv("ETHERSCAN_KEY")
     nft_transactions_url = f"https://api.etherscan.io/api?module=account&action=tokennfttx&address={address}&sort=asc&apikey={apikey}"
+    erc1155_transactions_url = f"https://api.etherscan.io/api?module=account&action=token1155tx&address={address}&sort=asc&apikey={apikey}"
     transactions_url = f"https://api.etherscan.io/api?module=account&action=txlist&address={address}&sort=asc&apikey={apikey}"
     internal_transactions_url = f"https://api.etherscan.io/api?module=account&action=txlistinternal&address={address}&sort=asc&apikey={apikey}"
 
     # Make all the requests in one shot and store the results in variables
-    response = requests.get(nft_transactions_url)
-    nft_transactions = response.json()["result"]
-    response = requests.get(transactions_url)
-    transactions = response.json()["result"]
-    response = requests.get(internal_transactions_url)
-    internal_transactions = response.json()["result"]
+    response_erc721_tx = requests.get(nft_transactions_url)
+    response_erc1155_tx = requests.get(erc1155_transactions_url)
+    response_tx = requests.get(transactions_url)
+    response_internal_tx = requests.get(internal_transactions_url)
+
+
+    # Extract the JSON data from the response
+    nft_transactions = response_erc721_tx.json()["result"]
+    erc1155_transactions = response_erc1155_tx.json()["result"]
+    transactions = response_tx.json()["result"]
+    internal_transactions = response_internal_tx.json()["result"]
+
+
+
+    # Merge erc 721 and erc 1155 transactions
+    nft_transactions.extend(erc1155_transactions)
+    print(nft_transactions)
+
+
+
+
+
+
 
     count_buy = 0
     count_sell = 0
@@ -105,4 +129,53 @@ def get_tx(address, contract_address):
 
 
     return project_name, count_buy, count_sell, profit
+
+
+def get_time_profit(address, timestamp):
+    # Define the API key once and use it for all requests
+    apikey = os.getenv("ETHERSCAN_KEY")
+    #get block number for timestamp
+    block_number_url = f"https://api.etherscan.io/api?module=block&action=getblocknobytime&timestamp={timestamp}&closest=before&apikey={apikey}"
+    response_block_number = requests.get(block_number_url)
+    block_number = response_block_number.json()["result"]
+
+    #get transactions for block number
+    nft_transactions_url = f"https://api.etherscan.io/api?module=account&action=tokennfttx&address={address}&startblock={block_number}&sort=asc&apikey={apikey}"
+    erc1155_transactions_url = f"https://api.etherscan.io/api?module=account&action=token1155tx&address={address}&startblock={block_number}&sort=asc&apikey={apikey}"
+    transactions_url = f"https://api.etherscan.io/api?module=account&action=txlist&address={address}&startblock={block_number}&sort=asc&apikey={apikey}"
+    internal_transactions_url = f"https://api.etherscan.io/api?module=account&action=txlistinternal&address={address}&startblock={block_number}&sort=asc&apikey={apikey}"
+
+    # Make all the requests in one shot and store the results in variables
+    response_erc721_tx = requests.get(nft_transactions_url)
+    response_erc1155_tx = requests.get(erc1155_transactions_url)
+    response_tx = requests.get(transactions_url)
+    response_internal_tx = requests.get(internal_transactions_url)
+
+    count_buy = 0
+    count_sell = 0
+    profit = 0
+    gas_spent = 0
+
+    nft_transactions = response_erc721_tx.json()["result"]
+    erc1155_transactions = response_erc1155_tx.json()["result"]
+    transactions = response_tx.json()["result"]
+    internal_transactions = response_internal_tx.json()["result"]
+
+    # Merge erc 721 and erc 1155 transactions
+    nft_transactions.extend(erc1155_transactions)
+
+    # clean up transactions
+    nft_transactions = remove_duplicates(nft_transactions, "hash")
+    traded_contracts = remove_duplicates(nft_transactions, "contractAddress")
+
+    # calculate the payed gas fees for the token approval transactions
+
+
+
+
+
+
+
+
+    print("Timestamp:", timestamp)
 
