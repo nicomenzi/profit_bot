@@ -64,6 +64,8 @@ def get_tx(address, contract_address):
     project_name = ""
     buy_price = []
     sell_price = []
+    bought_weth = []
+    count = 0
 
     # calculate the payed gas fees for the token approval transactions
     for tx in transactions:
@@ -78,16 +80,26 @@ def get_tx(address, contract_address):
         if tx["contractAddress"] != contract_address:
             continue
 
+        match = False
         # Determine if the transaction is a receive or transfer event
         if tx["to"].lower() == address.lower():
             for i in transactions:
-                if i["hash"] == tx["hash"] and (i["methodId"] == "0xa0712d68" or i["methodId"] == "0x26c858a4"):
-                    count_mint += 1
-                elif i["hash"] == tx["hash"]:
-                    count_buy += 1
+                if i["hash"] == tx["hash"]:
+                    match = True
+                    if i["hash"] == tx["hash"] and (i["methodId"] == "0xa0712d68" or i["methodId"] == "0x26c858a4"):
+                        count_mint += 1
+                    else:
+                        count_buy += 1
+            if match == False:
+                count_buy += 1
+                bought_weth.append(tx)
+
+
         elif tx["from"].lower() == address.lower():
             count_sell += 1
-
+    print("----------------------------")
+    print(bought_weth)
+    print("----------------------------")
     print("Minted: " + str(count_mint))
     print("Bought: " + str(count_buy))
     print("Sold: " + str(count_sell))
@@ -119,38 +131,52 @@ def get_tx(address, contract_address):
             transaction = [d for d in transactions if d['hash'] == tx['hash']]
             if not transaction:
                 print("NFT Received")
+                print(tx)
+                print( tx["tokenName"] + " " + tx["tokenSymbol"] + " " + tx["tokenID"] )
+                print("----")
 
             else:
                 value_in_eth = int(transaction[0]["value"]) / 10 ** 18
+                print("----")
                 print("Bought: " + tx["tokenName"] + " " + tx["tokenSymbol"] + " " + tx["tokenID"] + " for " + str(
                     value_in_eth) + " ETH")
+                print(tx)
+                print(transaction)
                 print(value_in_eth)
+                print("----")
                 buy_price.append(value_in_eth)
                 profit -= value_in_eth
         elif tx["from"].lower() == address.lower():
-
+            count += 1
             transaction = [d for d in internal_transactions if d['hash'] == tx['hash']]
-
+            print(transaction)
             if not transaction:
                 print("NFT Burned/Transferred")
             else:
-                value_in_eth = int(transaction[0]["value"]) / 10 ** 18
-                sell_price.append(value_in_eth)
-                profit += value_in_eth
+                for d in transaction:
+                    value_in_eth = int(d["value"]) / 10 ** 18
+                    sell_price.append(value_in_eth)
+                    profit += value_in_eth
+
+    for tx in bought_weth:
+        url = f"https://api.etherscan.io/api?module=proxy&action=eth_getTransactionByHash&txhash={tx['hash']}&apikey={apikey}"
+        response = requests.get(url)
+        result = response.json()["result"]
+        print(result)
 
     #get average buy price and sell price
     print(buy_price)
     print(sell_price)
-    if len(buy_price) > 0:
-        buy_price = sum(buy_price) / (count_buy + count_mint)
-    if len(sell_price) > 0:
-        sell_price = sum(sell_price) / count_sell
-
-    print(buy_price)
+    print(sum(sell_price))
+    #if len(buy_price) > 0:
+    #    buy_price = sum(buy_price) / (count_buy + count_mint)
+    #if len(sell_price) > 0:
+    #    sell_price = sum(sell_price) / count_sell
+    print(count)
     print(sell_price)
 
 
-    return project_name, count_buy, count_sell, count_mint, profit
+    return project_name, count_buy, count_sell, buy_price, sell_price, count_mint, profit
 
 
 def get_time_profit(address, timestamp):

@@ -27,7 +27,7 @@ async def on_ready():
 
 @bot.slash_command()
 async def profit(ctx, contract_address: str):
-    try:
+    #try:
         await ctx.response.defer()
 
         user_id = ctx.author.id
@@ -37,6 +37,8 @@ async def profit(ctx, contract_address: str):
         count_sell = 0
         count_mint = 0
         profit = 0
+        sellprice = []
+        buyprice = []
 
 
         # Get wallets for user from mysql database
@@ -47,18 +49,27 @@ async def profit(ctx, contract_address: str):
             # Get all transactions for all wallets
             for wallet in wallets:
                 address = wallet.address
-                project_name, count_buy_temp, count_sell_temp, count_mint_temp, profit_temp = get_tx(address, contract_address.lower())
+                project_name, count_buy_temp, count_sell_temp, buyprice_temp, sellprice_temp,  count_mint_temp, profit_temp = get_tx(address, contract_address.lower())
                 count_mint += count_mint_temp
                 count_buy += count_buy_temp
                 count_sell += count_sell_temp
                 profit += profit_temp
+                buyprice.extend(buyprice_temp)
+                sellprice.extend(sellprice_temp)
+            count = count_buy + count_mint
+            print(buyprice)
+            buy_price = sum(buyprice) / count
+            print("e")
+            print(sellprice)
+            sell_price = sum(sellprice) / count_sell
 
-            generate_image(project_name, count_buy, count_sell, count_mint, profit, user_id)
+
+            generate_image(project_name, count_buy, count_sell, count_mint, buy_price, sell_price, profit, user_id)
 
             await ctx.followup.send(file=disnake.File(f'pil_text_font{user_id}.png'))
-    except Exception as e:
-        print(e)
-        await ctx.followup.send("Something went wrong")
+    #except Exception as e:
+    #    print(e)
+    #    await ctx.followup.send("Something went wrong")
 
 
 @bot.slash_command()
