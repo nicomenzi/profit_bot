@@ -35,7 +35,9 @@ async def profit(ctx, contract_address: str):
 
         count_buy = 0
         count_sell = 0
+        count_mint = 0
         profit = 0
+
 
         # Get wallets for user from mysql database
         wallets = session.query(Wallet).filter_by(user_id=user_id).all()
@@ -45,12 +47,13 @@ async def profit(ctx, contract_address: str):
             # Get all transactions for all wallets
             for wallet in wallets:
                 address = wallet.address
-                project_name, count_buy_temp, count_sell_temp, profit_temp = get_tx(address, contract_address.lower())
+                project_name, count_buy_temp, count_sell_temp, count_mint_temp, profit_temp = get_tx(address, contract_address.lower())
+                count_mint += count_mint_temp
                 count_buy += count_buy_temp
                 count_sell += count_sell_temp
                 profit += profit_temp
 
-            generate_image(project_name, count_buy, count_sell, profit, user_id)
+            generate_image(project_name, count_buy, count_sell, count_mint, profit, user_id)
 
             await ctx.followup.send(file=disnake.File(f'pil_text_font{user_id}.png'))
     except Exception as e:

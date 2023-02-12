@@ -49,19 +49,21 @@ def get_tx(address, contract_address):
 
     # Merge erc 721 and erc 1155 transactions
     nft_transactions.extend(erc1155_transactions)
-    print(nft_transactions)
+    #print(nft_transactions)
 
 
 
 
 
 
-
+    count_mint = 0
     count_buy = 0
     count_sell = 0
     profit = 0
     gas_spent = 0
     project_name = ""
+    buy_price = []
+    sell_price = []
 
     # calculate the payed gas fees for the token approval transactions
     for tx in transactions:
@@ -70,6 +72,7 @@ def get_tx(address, contract_address):
                 gas_spent += int(tx["gasPrice"]) * int(tx["gasUsed"]) / 10 ** 18
                 profit -= gas_spent
 
+
     for tx in nft_transactions:
         # Skip transactions that don't match the contract address
         if tx["contractAddress"] != contract_address:
@@ -77,10 +80,17 @@ def get_tx(address, contract_address):
 
         # Determine if the transaction is a receive or transfer event
         if tx["to"].lower() == address.lower():
-            count_buy += 1
+            for i in transactions:
+                if i["hash"] == tx["hash"] and (i["methodId"] == "0xa0712d68" or i["methodId"] == "0x26c858a4"):
+                    count_mint += 1
+                elif i["hash"] == tx["hash"]:
+                    count_buy += 1
         elif tx["from"].lower() == address.lower():
             count_sell += 1
 
+    print("Minted: " + str(count_mint))
+    print("Bought: " + str(count_buy))
+    print("Sold: " + str(count_sell))
     # clean up transactions
     nft_transactions = remove_duplicates(nft_transactions, "hash")
 
@@ -108,13 +118,14 @@ def get_tx(address, contract_address):
 
             transaction = [d for d in transactions if d['hash'] == tx['hash']]
             if not transaction:
-                print("NFT Minted")
+                print("NFT Received")
 
             else:
                 value_in_eth = int(transaction[0]["value"]) / 10 ** 18
                 print("Bought: " + tx["tokenName"] + " " + tx["tokenSymbol"] + " " + tx["tokenID"] + " for " + str(
                     value_in_eth) + " ETH")
                 print(value_in_eth)
+                buy_price.append(value_in_eth)
                 profit -= value_in_eth
         elif tx["from"].lower() == address.lower():
 
@@ -124,11 +135,22 @@ def get_tx(address, contract_address):
                 print("NFT Burned/Transferred")
             else:
                 value_in_eth = int(transaction[0]["value"]) / 10 ** 18
-
+                sell_price.append(value_in_eth)
                 profit += value_in_eth
 
+    #get average buy price and sell price
+    print(buy_price)
+    print(sell_price)
+    if len(buy_price) > 0:
+        buy_price = sum(buy_price) / (count_buy + count_mint)
+    if len(sell_price) > 0:
+        sell_price = sum(sell_price) / count_sell
 
-    return project_name, count_buy, count_sell, profit
+    print(buy_price)
+    print(sell_price)
+
+
+    return project_name, count_buy, count_sell, count_mint, profit
 
 
 def get_time_profit(address, timestamp):
