@@ -68,7 +68,7 @@ async def profit(ctx, contract_address: str):
             project_name = await get_collection_name(contract_address.lower())
             floor_price = await get_collection_floor_price(contract_address.lower())
 
-            potential_profit = (floor_price * (count_sell - count_buy)) + profit
+            potential_profit = (floor_price * (count_buy + count_mint - count_sell)) + profit
 
 
             await generate_image(project_name, count_buy, count_sell, count_mint, buy_price, sell_price, profit, user_id, potential_profit)
