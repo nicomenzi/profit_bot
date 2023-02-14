@@ -6,10 +6,12 @@ from sqlalchemy.ext.declarative import declarative_base
 from create_image import generate_image, generate_image_time
 from dotenv import load_dotenv
 from models import User, Wallet, Base
-from get_data import get_tx, get_time_profit
+from get_data_v2 import get_profit, get_collection_name, get_collection_floor_price
 import os
 import time
+import asyncio
 load_dotenv()
+
 
 client = disnake.Client()
 
@@ -49,7 +51,7 @@ async def profit(ctx, contract_address: str):
             # Get all transactions for all wallets
             for wallet in wallets:
                 address = wallet.address
-                project_name, count_buy_temp, count_sell_temp, buyprice_temp, sellprice_temp,  count_mint_temp, profit_temp = get_tx(address, contract_address.lower())
+                count_mint_temp, count_buy_temp, count_sell_temp, buyprice_temp, sellprice_temp,  profit_temp = await get_profit(address, contract_address.lower())
                 count_mint += count_mint_temp
                 count_buy += count_buy_temp
                 count_sell += count_sell_temp
@@ -63,8 +65,11 @@ async def profit(ctx, contract_address: str):
             print(sellprice)
             sell_price = sum(sellprice) / count_sell
 
+            project_name = await get_collection_name(contract_address.lower())
+            floor_price = await get_collection_floor_price(contract_address.lower())
 
-            generate_image(project_name, count_buy, count_sell, count_mint, buy_price, sell_price, profit, user_id)
+
+            await generate_image(project_name, count_buy, count_sell, count_mint, buy_price, sell_price, profit, user_id)
 
             await ctx.followup.send(file=disnake.File(f'pil_text_font{user_id}.png'))
     #except Exception as e:
@@ -178,8 +183,19 @@ async def thirtydayprofit(ctx, address: str):
 
 
 
+async def main():
+    loop = asyncio.get_running_loop()
+    await bot.start(os.getenv('DISCORD_TOKEN'))
+
+if __name__ == '__main__':
+    asyncio.run(main())
 
 
-bot.run(os.getenv("DISCORD_TOKEN"))
+#if __name__ == "__main__":
+#    loop = asyncio.get_event_loop()
+#    loop.create_task(client.start(os.getenv('DISCORD_TOKEN')))
+#    #loop.create_task(bot.start(os.getenv('DISCORD_TOKEN')))
+#    loop.run_forever()
+
 
 
