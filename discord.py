@@ -68,8 +68,10 @@ async def profit(ctx, contract_address: str):
             project_name = await get_collection_name(contract_address.lower())
             floor_price = await get_collection_floor_price(contract_address.lower())
 
+            potential_profit = (floor_price * (count_sell - count_buy)) + profit
 
-            await generate_image(project_name, count_buy, count_sell, count_mint, buy_price, sell_price, profit, user_id)
+
+            await generate_image(project_name, count_buy, count_sell, count_mint, buy_price, sell_price, profit, user_id, potential_profit)
 
             await ctx.followup.send(file=disnake.File(f'pil_text_font{user_id}.png'))
     #except Exception as e:
