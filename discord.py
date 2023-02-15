@@ -194,22 +194,8 @@ async def thirtydayprofit(ctx, address: str):
 
     await ctx.followup.send("30d profit listed")
 
-
-
-
-#async def main():
-#    loop = asyncio.get_running_loop()
-#    await bot.start(os.getenv('DISCORD_TOKEN'))
-
 if __name__ == '__main__':
     bot.run(os.getenv('DISCORD_TOKEN'))
-
-
-#if __name__ == "__main__":
-#    loop = asyncio.get_event_loop()
-#    loop.create_task(client.start(os.getenv('DISCORD_TOKEN')))
-#    #loop.create_task(bot.start(os.getenv('DISCORD_TOKEN')))
-#    loop.run_forever()
 
 
 
