@@ -146,7 +146,7 @@ async def profit_history(ctx, days: int):
     timestamp = int(time.time())
     x_days_ago = timestamp - days * 24 * 60 * 60
 
-    get_block_url = f"https://api.etherscan.io/api?module=block&action=getblocknobytime&timestamp={x_days_ago}&closest=before&apikey={os.getenv('ETHERSCAN_API_KEY')}"
+    get_block_url = f"https://api.etherscan.io/api?module=block&action=getblocknobytime&timestamp={x_days_ago}&closest=before&apikey={os.getenv('ETHERSCAN_KEY')}"
     block = requests.get(get_block_url).json()["result"]
 
 
