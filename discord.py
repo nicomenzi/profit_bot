@@ -168,13 +168,10 @@ async def profit_history(ctx, days: int):
                 profit += profit_temp
                 buyprice.extend(buyprice_temp)
                 sellprice.extend(sellprice_temp)
-            count = count_buy + count_mint
-            print(buyprice)
-            buy_price = sum(buyprice) / count
-            print("e")
-            print(sellprice)
-            sell_price = sum(sellprice) / count_sell
-            print(profit)
+
+            if count_buy == 0 and count_sell == 0 and count_mint == 0:
+                await ctx.followup.send("No transactions found")
+                return
 
             await generate_image_time(count_mint, count_buy, count_sell, profit, user_id, timestamp)
             await ctx.followup.send(file=disnake.File(f'profit_time{user_id}.png'))
@@ -196,6 +193,7 @@ async def thirtydayprofit(ctx, address: str):
     seven_days_ago = timestamp - 30 * 24 * 60 * 60
 
     await ctx.followup.send("30d profit listed")
+
 
 
 

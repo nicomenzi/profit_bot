@@ -243,20 +243,20 @@ async def get_x_day_profit(address, block, timestamp):
 
     #calculate gas fees
     for tx_es in tx_etherscan:
-        for tx in minttx:
-            if tx == tx_es["hash"]:
-                profit -= int(tx_es["gasPrice"]) * int(tx_es["gasUsed"]) / 10 ** 18
-                value = int(tx_es["value"]) / 10 ** 18
-                buyprice.append(value)
-                profit -= (int(tx_es["value"]) / 10 ** 18)
-                break
-
+            for tx in minttx:
+                if tx == tx_es["hash"]:
+                    profit -= int(tx_es["gasPrice"]) * int(tx_es["gasUsed"]) / 10 ** 18
+                    value = int(tx_es["value"]) / 10 ** 18
+                    buyprice.append(value)
+                    profit -= (int(tx_es["value"]) / 10 ** 18)
+                    break
+#
     # calculate the payed gas fees for the transactions
-    for tx in tx_etherscan:
-
-        if tx["to"].lower() == address:
-            gas_in_eth = int(tx["gasPrice"]) * int(tx["gasUsed"]) / 10 ** 18
-            profit -= gas_in_eth
+    #for tx in tx_etherscan:
+##
+    #    if tx["to"].lower() == address:
+    #        gas_in_eth = int(tx["gasPrice"]) * int(tx["gasUsed"]) / 10 ** 18
+    #        profit -= gas_in_eth
 
     # calculate the payed gas fees for the token approval transactions
     for tx in tx_etherscan:
