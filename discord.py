@@ -6,14 +6,15 @@ from sqlalchemy.ext.declarative import declarative_base
 from create_image import generate_image, generate_image_time
 from dotenv import load_dotenv
 from models import User, Wallet, Base
-from get_data_v2 import get_profit, get_collection_name, get_collection_floor_price
+from get_data_v2 import get_profit, get_collection_name, get_collection_floor_price, get_x_day_profit
 import os
 import time
 import asyncio
+import requests
 load_dotenv()
 
 
-client = disnake.Client()
+#client = disnake.Client()
 
 bot = commands.InteractionBot()
 
@@ -25,7 +26,6 @@ session = Session()
 @bot.event
 async def on_ready():
     print(f'We have logged in as {bot.user}')
-
 
 @bot.slash_command()
 async def profit(ctx, contract_address: str):
@@ -130,12 +130,15 @@ async def list_wallets(ctx):
 
 
 @bot.slash_command()
-async def profit_history(ctx, address: str, days: int):
+async def profit_history(ctx, days: int):
     await ctx.response.defer()
 
     count_buy = 0
     count_sell = 0
+    count_mint = 0
     profit = 0
+    sellprice = []
+    buyprice = []
 
     user_id = ctx.author.id
 
@@ -143,27 +146,38 @@ async def profit_history(ctx, address: str, days: int):
     timestamp = int(time.time())
     x_days_ago = timestamp - days * 24 * 60 * 60
 
+    get_block_url = f"https://api.etherscan.io/api?module=block&action=getblocknobytime&timestamp={x_days_ago}&closest=before&apikey={os.getenv('ETHERSCAN_API_KEY')}"
+    block = requests.get(get_block_url).json()["result"]
+
+
     users = session.query(User).filter_by(user_id=ctx.author.id).all()
     if len(users) == 0:
         await ctx.followup.send("You don't have any wallets")
     else:
-        wallets = session.query(Wallet).filter_by(address=address.lower()).all()
+        wallets = session.query(Wallet).filter_by(user_id=ctx.author.id).all()
         if len(wallets) == 0:
             await ctx.followup.send("You don't have any wallets")
 
         else:
             for wallet in wallets:
                 address = wallet.address
-                count_buy_temp, count_sell_temp, profit_temp = get_time_profit(address, x_days_ago)
+                count_mint_temp, count_buy_temp, count_sell_temp, buyprice_temp, sellprice_temp,  profit_temp = await get_x_day_profit(address.lower(), block, x_days_ago)
+                count_mint += count_mint_temp
                 count_buy += count_buy_temp
                 count_sell += count_sell_temp
                 profit += profit_temp
+                buyprice.extend(buyprice_temp)
+                sellprice.extend(sellprice_temp)
+            count = count_buy + count_mint
+            print(buyprice)
+            buy_price = sum(buyprice) / count
+            print("e")
+            print(sellprice)
+            sell_price = sum(sellprice) / count_sell
+            print(profit)
 
-            generate_image_time(count_buy, count_sell, profit, user_id, x_days_ago)
-
-
-
-    await ctx.followup.send("7d profit listed")
+            await generate_image_time(count_mint, count_buy, count_sell, profit, user_id, timestamp)
+            await ctx.followup.send(file=disnake.File(f'profit_time{user_id}.png'))
 
 @bot.slash_command()
 async def fifteendayprofit(ctx, address: str):
@@ -185,12 +199,12 @@ async def thirtydayprofit(ctx, address: str):
 
 
 
-async def main():
-    loop = asyncio.get_running_loop()
-    await bot.start(os.getenv('DISCORD_TOKEN'))
+#async def main():
+#    loop = asyncio.get_running_loop()
+#    await bot.start(os.getenv('DISCORD_TOKEN'))
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    bot.run(os.getenv('DISCORD_TOKEN'))
 
 
 #if __name__ == "__main__":

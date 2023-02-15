@@ -5,6 +5,9 @@ import calendar
 import time
 from models import User, Wallet
 load_dotenv()
+from transpose import Transpose
+
+
 
 
 def remove_duplicates(arr, attr):
@@ -21,12 +24,24 @@ def remove_duplicates(arr, attr):
     return result
 
 def get_tx(address, contract_address):
-    # Get wallets for user from mysql database
+    apikey = os.getenv("ETHERSCAN_KEY")
+    api = Transpose('transpose_api_key')
+    # Get sales
+    sales = api.nft.sales_by_account(account_address=address, order='asc', limit=10000)
+    # Get mints
+    mints = api.nft.mints_by_account(account_address=address, order='asc', limit=10000)
+
+    
+
+
+
+
+
 
 
 
     # Define the API key once and use it for all requests
-    apikey = os.getenv("ETHERSCAN_KEY")
+
     nft_transactions_url = f"https://api.etherscan.io/api?module=account&action=tokennfttx&address={address}&sort=asc&apikey={apikey}"
     erc1155_transactions_url = f"https://api.etherscan.io/api?module=account&action=token1155tx&address={address}&sort=asc&apikey={apikey}"
     transactions_url = f"https://api.etherscan.io/api?module=account&action=txlist&address={address}&sort=asc&apikey={apikey}"

@@ -269,6 +269,8 @@ async def get_x_day_profit(address, block, timestamp):
 
 
 
+
+
 async def get_collection_name(contract_address):
     url = "https://api.transpose.io/nft/collections-by-contract-address"
     headers = {
@@ -288,3 +290,19 @@ async def get_collection_floor_price(contract_address):
     response = requests.get(url, headers=headers)
     fp = response.json()["openSea"]["floorPrice"]
     return fp
+
+#call async functions
+async def main():
+    timestamp = int(time.time())
+    print(timestamp)
+    x_days_ago = timestamp - 30 * 24 * 60 * 60
+    print(x_days_ago)
+
+    get_block_url = f"https://api.etherscan.io/api?module=block&action=getblocknobytime&timestamp={x_days_ago}&closest=before&apikey={os.getenv('ETHERSCAN_KEY')}"
+    block = requests.get(get_block_url).json()["result"]
+    count_mint, count_buy, count_sell, buyprice, sellprice, profit = await get_x_day_profit("0xfe59f409d7a05f8e24aa90626186cc820c8e3005", block, x_days_ago)
+    print(count_mint, count_buy, count_sell, buyprice, sellprice, profit)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
