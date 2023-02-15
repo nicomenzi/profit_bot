@@ -1,5 +1,4 @@
 from PIL import Image, ImageDraw, ImageFont
-from get_data import get_tx
 
 async def generate_image(project_name, count_buy, count_sell, count_mint, avg_buy_price, avg_sell_price, profit, discord_id, potential_profit):
     with Image.open("background.png") as img:
