@@ -26,7 +26,7 @@ async def on_ready():
 
 @bot.slash_command()
 async def profit(ctx, contract_address: str):
-    try:
+    #try:
         await ctx.response.defer()
 
         #check if contract address is valid
@@ -74,9 +74,9 @@ async def profit(ctx, contract_address: str):
             await generate_image(project_name, count_buy, count_sell, count_mint, buy_price, sell_price, profit, user_id, potential_profit, user_avatar, user_name)
 
             await ctx.followup.send(file=disnake.File(f'pil_text_font{user_id}.png'))
-    except Exception as e:
-        print(e)
-        await ctx.followup.send("Something went wrong")
+    #except Exception as e:
+    #    print(e)
+    #    await ctx.followup.send("Something went wrong")
 
 
 
@@ -146,7 +146,7 @@ async def list_wallets(ctx):
         await ctx.followup.send("Something went wrong")
 
 @bot.slash_command()
-async def PNL_profit(ctx, token: str, type: commands.Param(choices=["Short", "Long"]), exchange: str, ROI: float, entry: float, exit: float):
+async def pnl_profit(ctx, token: str,  exchange: str, roi: float, entry: float, exit: float, type: str = commands.Param(choices=["Short", "Long"])):
     try:
         await ctx.response.defer()
 

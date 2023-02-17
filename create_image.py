@@ -5,14 +5,27 @@ from io import BytesIO
 import requests
 from io import BytesIO
 
+async def center_text(d: ImageDraw, text: str, x: int, y: int) -> tuple:
+    font_size = 35
+    font_type = "Barlow-Bold.ttf"
+    font = ImageFont.truetype(font_type, font_size)
+    text_width, text_height = d.textsize(text, font=font)
+    x_start = x - text_width // 2
+    y_start = y - text_height // 2
+    return x_start, y_start
 
 async def generate_image(project_name, count_buy, count_sell, count_mint, avg_buy_price, avg_sell_price, profit,
                          discord_id, potential_profit, image_url, user_name):
-    with Image.open("background.png") as img:
+    with Image.open("background2.png") as img:
         # Display project name, buy count, sell count, and profit in image
         d = ImageDraw.Draw(img)
+        font_size =35
+        font_type = "Barlow-Bold.ttf"
+
+
         # fnt = ImageFont.truetype('Pillow/Tests/fonts/FreeMono.ttf', 40)
-        d.text((10, 10), "Project Name: " + project_name, fill=(0, 0, 0))
+        x,y = await center_text(d, project_name, 600, 360)
+        d.text((x, y), project_name, font=ImageFont.truetype(font_type, font_size), fill=(206, 122, 38))
         d.text((10, 30), "NFT Mint: " + str(count_mint), fill=(0, 0, 0))
         d.text((10, 50), "NFT Buy: " + str(count_buy), fill=(0, 0, 0))
         d.text((10, 70), "NFT Sell: " + str(count_sell), fill=(0, 0, 0))

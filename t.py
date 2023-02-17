@@ -232,40 +232,41 @@ async def get_x_day_profit(address, block, timestamp):
             count_mint += tx["quantity"]
             minttx.append(tx["transaction_hash"])
             print(tx["transaction_hash"])
-        #if tx["category"] == "send" and tx["to_address"] == address:
-        #    count_buy += 1
-        #    buyprice.append(0)
-        #elif tx["category"] == "send" and tx["from_address"] == address:
-        #    count_sell += 1
-        #    sellprice.append(0)
+        if tx["category"] == "send" and tx["to"] == address:
+            count_buy += 1
+            buyprice.append(0)
+        elif tx["category"] == "send" and tx["from"] == address:
+            count_sell += 1
+            sellprice.append(0)
 
     minttx = list(dict.fromkeys(minttx))
 
     #calculate gas fees
     for tx_es in tx_etherscan:
-        for tx in minttx:
-            if tx == tx_es["hash"]:
-                profit -= int(tx_es["gasPrice"]) * int(tx_es["gasUsed"]) / 10 ** 18
-                value = int(tx_es["value"]) / 10 ** 18
-                buyprice.append(value)
-                profit -= (int(tx_es["value"]) / 10 ** 18)
-                break
+            for tx in minttx:
+                if tx == tx_es["hash"]:
+                    profit -= int(tx_es["gasPrice"]) * int(tx_es["gasUsed"]) / 10 ** 18
+                    value = int(tx_es["value"]) / 10 ** 18
+                    buyprice.append(value)
+                    profit -= (int(tx_es["value"]) / 10 ** 18)
+                    break
 
-    # calculate the payed gas fees for the transactions
-    for tx in tx_etherscan:
-
-        if tx["to"].lower() == address:
-            gas_in_eth = int(tx["gasPrice"]) * int(tx["gasUsed"]) / 10 ** 18
-            profit -= gas_in_eth
-
-    # calculate the payed gas fees for the token approval transactions
-    for tx in tx_etherscan:
-        if "0xa22cb465" == tx["methodId"]:
-            gas_spent += int(tx["gasPrice"]) * int(tx["gasUsed"]) / 10 ** 18
-            profit -= gas_spent
+     #calculate the payed gas fees for the transactions
+    #for tx in tx_etherscan:
+##
+    #    if tx["from"].lower() == address:
+    #        gas_in_eth = int(tx["gasPrice"]) * int(tx["gasUsed"]) / 10 ** 18
+    #        profit -= gas_in_eth
+#
+    ## calculate the payed gas fees for the token approval transactions
+    #for tx in tx_etherscan:
+    #    if tx["from"].lower() == address:
+    #        if "0xa22cb465" == tx["methodId"]:
+    #            gas_spent += int(tx["gasPrice"]) * int(tx["gasUsed"]) / 10 ** 18
+    #            profit -= gas_spent
+#
 
     return count_mint, count_buy, count_sell, buyprice, sellprice, profit
-
 
 
 
@@ -295,14 +296,15 @@ async def get_collection_floor_price(contract_address):
 async def main():
     timestamp = int(time.time())
     print(timestamp)
-    x_days_ago = timestamp - 30 * 24 * 60 * 60
+    x_days_ago = timestamp - 700 * 24 * 60 * 60
     print(x_days_ago)
 
     get_block_url = f"https://api.etherscan.io/api?module=block&action=getblocknobytime&timestamp={x_days_ago}&closest=before&apikey={os.getenv('ETHERSCAN_KEY')}"
     block = requests.get(get_block_url).json()["result"]
-    count_mint, count_buy, count_sell, buyprice, sellprice, profit = await get_x_day_profit("0xfe59f409d7a05f8e24aa90626186cc820c8e3005", block, x_days_ago)
+    count_mint, count_buy, count_sell, buyprice, sellprice, profit = await get_x_day_profit("0xC7b83FE1FBdF8dCe71DEDd9862135F990625e220", block, x_days_ago)
     print(count_mint, count_buy, count_sell, buyprice, sellprice, profit)
-
+    print(sum(buyprice))
+    print(sum(sellprice))
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -74,7 +74,7 @@ async def get_profit(address, contract_address):
             asyncio.create_task(make_request(session, url_tx_etherscan))
         ]
         response_nft_tx, response_sales, response_tx_etherscan = await asyncio.gather(*tasks)
-
+    delay = 1
     nft_tx = response_nft_tx["results"]
     sales = response_sales["results"]
     tx_etherscan = response_tx_etherscan["result"]
@@ -250,13 +250,13 @@ async def get_x_day_profit(address, block, timestamp):
                     buyprice.append(value)
                     profit -= (int(tx_es["value"]) / 10 ** 18)
                     break
-#
-    # calculate the payed gas fees for the transactions
-    #for tx in tx_etherscan:
-##
-    #    if tx["to"].lower() == address:
-    #        gas_in_eth = int(tx["gasPrice"]) * int(tx["gasUsed"]) / 10 ** 18
-    #        profit -= gas_in_eth
+
+     #calculate the payed gas fees for the transactions
+    for tx in tx_etherscan:
+
+        if tx["to"].lower() == address:
+            gas_in_eth = int(tx["gasPrice"]) * int(tx["gasUsed"]) / 10 ** 18
+            profit -= gas_in_eth
 
     # calculate the payed gas fees for the token approval transactions
     for tx in tx_etherscan:
