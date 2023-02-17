@@ -9,6 +9,7 @@ from get_data_v2 import get_profit, get_collection_name, get_collection_floor_pr
 import os
 import time
 import requests
+import asyncio
 from enum import Enum
 load_dotenv()
 
@@ -196,6 +197,7 @@ async def profit_history(ctx, days: int):
         else:
             for wallet in wallets:
                 address = wallet.address
+
                 count_mint_temp, count_buy_temp, count_sell_temp, buyprice_temp, sellprice_temp,  profit_temp = await get_x_day_profit(address.lower(), block, x_days_ago)
                 count_mint += count_mint_temp
                 count_buy += count_buy_temp

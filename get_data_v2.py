@@ -8,6 +8,7 @@ import aiohttp
 from models import User, Wallet
 load_dotenv()
 
+MAX_CONCURRENT = 3
 
 def remove_duplicates(arr, attr):
     values = [i[attr] for i in arr]
@@ -64,10 +65,10 @@ async def get_profit(address, contract_address):
         "order": "desc",
         "limit" : "10000",
     }
-    #-------------------------------------------------------------------------------------------------------------------
-    # API calls and data cleaning
-    #-------------------------------------------------------------------------------------------------------------------
-    async with aiohttp.ClientSession() as session:
+
+    connector = aiohttp.TCPConnector(limit=1)
+
+    async with aiohttp.ClientSession(connector=connector) as session:
         tasks = [
             asyncio.create_task(make_request(session, url_nft_tx, headers=headers, params=params_get_nft_tx)),
             asyncio.create_task(make_request(session, url_sales, headers=headers, params=params_get_nft_tx)),
