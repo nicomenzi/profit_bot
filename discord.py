@@ -3,7 +3,7 @@ from disnake.ext import commands
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from create_image import generate_image, generate_image_time
+from create_image import generate_image, generate_image_time, generate_image_manual
 from dotenv import load_dotenv
 from models import User, Wallet, Base
 from get_data_v2 import get_profit, get_collection_name, get_collection_floor_price, get_x_day_profit
@@ -33,6 +33,8 @@ async def profit(ctx, contract_address: str):
         await ctx.response.defer()
 
         user_id = ctx.author.id
+        user_avatar = ctx.author.display_avatar
+        user_name = ctx.author.display_name
 
 
         count_buy = 0
@@ -71,7 +73,7 @@ async def profit(ctx, contract_address: str):
             potential_profit = (floor_price * (count_buy + count_mint - count_sell)) + profit
 
 
-            await generate_image(project_name, count_buy, count_sell, count_mint, buy_price, sell_price, profit, user_id, potential_profit)
+            await generate_image(project_name, count_buy, count_sell, count_mint, buy_price, sell_price, profit, user_id, potential_profit, user_avatar, user_name)
 
             await ctx.followup.send(file=disnake.File(f'pil_text_font{user_id}.png'))
     #except Exception as e:
@@ -177,22 +179,27 @@ async def profit_history(ctx, days: int):
             await ctx.followup.send(file=disnake.File(f'profit_time{user_id}.png'))
 
 @bot.slash_command()
-async def fifteendayprofit(ctx, address: str):
+async def manual_profit(ctx, type: str, amount: int, price_buy: float, price_sell: float):
     await ctx.response.defer()
-    # get 15d profit
-    timestamp = int(time.time())
-    seven_days_ago = timestamp - 15 * 24 * 60 * 60
+    user_id = ctx.author.id
+    await generate_image_manual(type, amount, price_buy, price_sell, user_id)
+    await ctx.followup.send(file=disnake.File(f'manual{user_id}.png'))
 
-    await ctx.followup.send("15d profit listed")
+
 
 @bot.slash_command()
-async def thirtydayprofit(ctx, address: str):
+async def help(ctx):
     await ctx.response.defer()
-    # get 30d profit
-    timestamp = int(time.time())
-    seven_days_ago = timestamp - 30 * 24 * 60 * 60
+    await ctx.followup.send("Commands: \n"
+                            "/add_wallet <address> - Add a wallet \n"
+                            "/remove_wallet <address> - Remove a wallet\n"
+                            "/list_wallets - List all your wallets\n"
+                            "/profit_history <days> - Get profit history for the last x days \n"
+                            "/manual_profit <type> <amount> <price_buy> <price_sell> - Get profit for a profit of any kind\n"
+                            "/profit - Get profit for all of your wallets from a certain collection \n"
+                            "/help - Show help \n")
 
-    await ctx.followup.send("30d profit listed")
+
 
 if __name__ == '__main__':
     bot.run(os.getenv('DISCORD_TOKEN'))
