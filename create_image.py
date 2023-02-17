@@ -45,7 +45,7 @@ async def generate_image_time(count_mint, count_buy, count_sell, profit, discord
         img.save(f'profit_time{discord_id}.png')
 
 
-async def generate_image_manual(type, amount, price_buy,price_sell, user_id):
+async def generate_image_manual(type, amount, price_buy,price_sell, user_id, user_name, image_url):
     with Image.open("background.png") as img:
         d = ImageDraw.Draw(img)
         #fnt = ImageFont.truetype('Pillow/Tests/fonts/FreeMono.ttf', 40)
@@ -53,7 +53,32 @@ async def generate_image_manual(type, amount, price_buy,price_sell, user_id):
         d.text((10,30), "Amount: " + str(amount),  fill=(0, 0, 0))
         d.text((10,50), "Price Buy: " + str(price_buy),  fill=(0, 0, 0))
         d.text((10,70), "Price Sell: " + str(price_sell),  fill=(0, 0, 0))
+        d.text((10,90), "User: " + user_name,  fill=(0, 0, 0))
+
+        # Get the image from the URL and resize it to 30 pixels
+        response = requests.get(image_url)
+        img_to_paste = Image.open(BytesIO(response.content)).resize((30, 30))
+
         img.save(f'manual{user_id}.png')
+
+
+async def generate_image_PNL(token, type, exchange, ROI, entry, exit,  user_id, user_avatar, user_name):
+    with Image.open("background.png") as img:
+        d = ImageDraw.Draw(img)
+        #fnt = ImageFont.truetype('Pillow/Tests/fonts/FreeMono.ttf', 40)
+        d.text((10,10), "Token: " + token,  fill=(0, 0, 0))
+        d.text((10,30), "Type: " + type,  fill=(0, 0, 0))
+        d.text((10,50), "Exchange: " + exchange,  fill=(0, 0, 0))
+        d.text((10,70), "ROI: " + str(ROI),  fill=(0, 0, 0))
+        d.text((10,90), "Entry: " + str(entry),  fill=(0, 0, 0))
+        d.text((10,110), "Exit: " + str(exit),  fill=(0, 0, 0))
+        d.text((10,130), "User: " + user_name,  fill=(0, 0, 0))
+
+        # Get the image from the URL and resize it to 30 pixels
+        response = requests.get(user_avatar)
+        img_to_paste = Image.open(BytesIO(response.content)).resize((30, 30))
+
+        img.save(f'PNL{user_id}.png')
 
 
 

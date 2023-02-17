@@ -1,20 +1,17 @@
 import disnake
 from disnake.ext import commands
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
-from create_image import generate_image, generate_image_time, generate_image_manual
+from create_image import generate_image, generate_image_time, generate_image_manual, generate_image_PNL
 from dotenv import load_dotenv
 from models import User, Wallet, Base
 from get_data_v2 import get_profit, get_collection_name, get_collection_floor_price, get_x_day_profit
 import os
 import time
-import asyncio
 import requests
+from enum import Enum
 load_dotenv()
 
-
-#client = disnake.Client()
 
 bot = commands.InteractionBot()
 
@@ -29,13 +26,17 @@ async def on_ready():
 
 @bot.slash_command()
 async def profit(ctx, contract_address: str):
-    #try:
+    try:
         await ctx.response.defer()
+
+        #check if contract address is valid
+        if len(contract_address) != 42:
+            await ctx.followup.send("Invalid contract address")
+            return
 
         user_id = ctx.author.id
         user_avatar = ctx.author.display_avatar
-        user_name = ctx.author.display_name
-
+        user_name = ctx.author.name + "#" + ctx.author.discriminator
 
         count_buy = 0
         count_sell = 0
@@ -61,10 +62,7 @@ async def profit(ctx, contract_address: str):
                 buyprice.extend(buyprice_temp)
                 sellprice.extend(sellprice_temp)
             count = count_buy + count_mint
-            print(buyprice)
             buy_price = sum(buyprice) / count
-            print("e")
-            print(sellprice)
             sell_price = sum(sellprice) / count_sell
 
             project_name = await get_collection_name(contract_address.lower())
@@ -76,59 +74,94 @@ async def profit(ctx, contract_address: str):
             await generate_image(project_name, count_buy, count_sell, count_mint, buy_price, sell_price, profit, user_id, potential_profit, user_avatar, user_name)
 
             await ctx.followup.send(file=disnake.File(f'pil_text_font{user_id}.png'))
-    #except Exception as e:
-    #    print(e)
-    #    await ctx.followup.send("Something went wrong")
+    except Exception as e:
+        print(e)
+        await ctx.followup.send("Something went wrong")
+
 
 
 @bot.slash_command()
 async def add_wallet(ctx, address: str):
     await ctx.response.defer()
-    # Add wallet to mysql database
-    users = session.query(User).filter_by(user_id=ctx.author.id).all()
-    if len(users) == 0:
-        user = User(user_id=ctx.author.id, name=ctx.author.name)
-        session.add(user)
+    try:
+        #check if address is valid
+        if len(address) != 42:
+            await ctx.followup.send("Invalid address")
+            return
+        # Add wallet to mysql database
+        users = session.query(User).filter_by(user_id=ctx.author.id).all()
+        if len(users) == 0:
+            user = User(user_id=ctx.author.id, name=ctx.author.name)
+            session.add(user)
+            session.commit()
+
+        wallet = Wallet(address=address.lower(), user_id=ctx.author.id)
+        session.add(wallet)
         session.commit()
 
-    wallet = Wallet(address=address.lower(), user_id=ctx.author.id)
-    session.add(wallet)
-    session.commit()
-
-    await ctx.followup.send("Wallet added")
+        await ctx.followup.send("Wallet added")
+    except Exception as e:
+        print(e)
+        await ctx.followup.send("Something went wrong")
 
 @bot.slash_command()
 async def remove_wallet(ctx, address: str):
-    await ctx.response.defer()
-    # Remove wallet from mysql database
-    users = session.query(User).filter_by(user_id=ctx.author.id).all()
-    if len(users) == 0:
-        await ctx.followup.send("You don't have any wallets")
-    else:
-        wallets = session.query(Wallet).filter_by(address=address.lower()).all()
-        if len(wallets) == 0:
-            await ctx.followup.send("Wallet not found")
+    try:
+        await ctx.response.defer()
+        # Remove wallet from mysql database
+        users = session.query(User).filter_by(user_id=ctx.author.id).all()
+        if len(users) == 0:
+            await ctx.followup.send("You don't have any wallets")
         else:
-            session.delete(wallets[0])
-            session.commit()
-            await ctx.followup.send("Wallet removed")
+            wallets = session.query(Wallet).filter_by(address=address.lower()).all()
+            if len(wallets) == 0:
+                await ctx.followup.send("Wallet not found")
+            else:
+                session.delete(wallets[0])
+                session.commit()
+                await ctx.followup.send("Wallet removed")
+    except Exception as e:
+        print(e)
+        await ctx.followup.send("Something went wrong")
 
 @bot.slash_command()
 async def list_wallets(ctx):
-    await ctx.response.defer(ephemeral=True)
-    # List wallets from json file
-    users = session.query(User).filter_by(user_id=ctx.author.id).all()
-    if len(users) == 0:
-        await ctx.followup.send("You don't have any wallets")
-    else:
-        wallets = session.query(Wallet).filter_by(user_id=ctx.author.id).all()
-        if len(wallets) == 0:
+    try:
+        await ctx.response.defer(ephemeral=True)
+        # List wallets from json file
+        users = session.query(User).filter_by(user_id=ctx.author.id).all()
+        if len(users) == 0:
             await ctx.followup.send("You don't have any wallets")
         else:
-            wallet_list = ""
-            for wallet in wallets:
-                wallet_list += wallet.address + "\n"
-            await ctx.followup.send(wallet_list, ephemeral=True)
+            wallets = session.query(Wallet).filter_by(user_id=ctx.author.id).all()
+            if len(wallets) == 0:
+                await ctx.followup.send("You don't have any wallets")
+            else:
+                wallet_list = ""
+                for wallet in wallets:
+                    wallet_list += wallet.address + "\n"
+                await ctx.followup.send(wallet_list, ephemeral=True)
+    except Exception as e:
+        print(e)
+        await ctx.followup.send("Something went wrong")
+
+@bot.slash_command()
+async def PNL_profit(ctx, token: str, type: commands.Param(choices=["Short", "Long"]), exchange: str, ROI: float, entry: float, exit: float):
+    try:
+        await ctx.response.defer()
+
+        user_id = ctx.author.id
+        user_avatar = ctx.author.display_avatar
+        user_name = ctx.author.name + "#" + ctx.author.discriminator
+
+
+        await generate_image_PNL(token, type, exchange, ROI, entry, exit,  user_id, user_avatar, user_name)
+        await ctx.followup.send(file=disnake.File(f'PNL{user_id}.png'))
+    except Exception as e:
+        print(e)
+        await ctx.followup.send("Something went wrong")
+
+
 
 
 @bot.slash_command()
@@ -180,10 +213,18 @@ async def profit_history(ctx, days: int):
 
 @bot.slash_command()
 async def manual_profit(ctx, type: str, amount: int, price_buy: float, price_sell: float):
-    await ctx.response.defer()
-    user_id = ctx.author.id
-    await generate_image_manual(type, amount, price_buy, price_sell, user_id)
-    await ctx.followup.send(file=disnake.File(f'manual{user_id}.png'))
+    try:
+        await ctx.response.defer()
+        user_id = ctx.author.id
+        user_avatar = ctx.author.display_avatar
+        user_name = ctx.author.name + "#" + ctx.author.discriminator
+        await ctx.response.defer()
+        user_id = ctx.author.id
+        await generate_image_manual(type, amount, price_buy, price_sell, user_name, user_avatar, user_id)
+        await ctx.followup.send(file=disnake.File(f'manual{user_id}.png'))
+    except Exception as e:
+        print(e)
+        await ctx.followup.send("Something went wrong")
 
 
 
@@ -195,7 +236,7 @@ async def help(ctx):
                             "/remove_wallet <address> - Remove a wallet\n"
                             "/list_wallets - List all your wallets\n"
                             "/profit_history <days> - Get profit history for the last x days \n"
-                            "/manual_profit <type> <amount> <price_buy> <price_sell> - Get profit for a profit of any kind\n"
+                            "/manual_profit- Get profit for a profit of any kind\n"
                             "/profit - Get profit for all of your wallets from a certain collection \n"
                             "/help - Show help \n")
 
