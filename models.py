@@ -11,6 +11,7 @@ class User(Base):
     __tablename__ = 'user'
     user_id = Column(BIGINT(unsigned=True), primary_key=True)
     name = Column(String(255))
+    twitter_handle = Column(String(255))
 
     def __repr__(self):
         return f"User(name={self.name})"

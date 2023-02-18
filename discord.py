@@ -46,9 +46,12 @@ async def profit(ctx, contract_address: str):
         sellprice = []
         buyprice = []
 
+        eth_price = requests.get(f"https://api.etherscan.io/api?module=stats&action=ethprice&apikey={os.getenv('ETHERSCAN_KEY')}").json()['result']['ethusd']
+
 
         # Get wallets for user from mysql database
         wallets = session.query(Wallet).filter_by(user_id=user_id).all()
+
         if len(wallets) == 0:
             await ctx.followup.send("You have no wallets added")
         else:
@@ -68,18 +71,45 @@ async def profit(ctx, contract_address: str):
 
             project_name = await get_collection_name(contract_address.lower())
             floor_price = await get_collection_floor_price(contract_address.lower())
-
+            user = session.query(User).filter_by(user_id=user_id).first()
             potential_profit = (floor_price * (count_buy + count_mint - count_sell)) + profit
 
 
-            await generate_image(project_name, count_buy, count_sell, count_mint, buy_price, sell_price, profit, user_id, potential_profit, user_avatar, user_name)
+            await generate_image(project_name=project_name, count_buy=count_buy, count_sell=count_sell, count_mint=count_mint, avg_buy_price=buy_price, avg_sell_price=sell_price, profit=profit, potential_profit=potential_profit, eth_price=eth_price, discord_id=user_id, image_url=user_avatar, user_name=user_name, twitter_handle=user.twitter_handle )
 
             await ctx.followup.send(file=disnake.File(f'pil_text_font{user_id}.png'))
     #except Exception as e:
     #    print(e)
     #    await ctx.followup.send("Something went wrong")
 
+@bot.slash_command()
+async def add_twitter_handle(ctx, handle: str):
+    await ctx.response.defer()
+    #split handle to remove @
+    handle = handle.split("@")[1]
+    # Add twitter handle to mysql database
+    users = session.query(User).filter_by(user_id=ctx.author.id).all()
+    if len(users) == 0:
+        user = User(user_id=ctx.author.id, name=ctx.author.name, twitter_handle=handle)
+        session.add(user)
+        session.commit()
+    else:
+        users[0].twitter_handle = handle
+        session.commit()
 
+    await ctx.followup.send("Twitter handle added")
+
+@bot.slash_command()
+async def remove_twitter_handle(ctx):
+    await ctx.response.defer()
+    # Add twitter handle to mysql database
+    users = session.query(User).filter_by(user_id=ctx.author.id).all()
+    if len(users) == 0:
+        await ctx.followup.send("You have no twitter handle added")
+    else:
+        users[0].twitter_handle = None
+        session.commit()
+        await ctx.followup.send("Twitter handle removed")
 
 @bot.slash_command()
 async def add_wallet(ctx, address: str):
