@@ -126,7 +126,7 @@ async def remove_twitter_handle(ctx):
 
 @bot.slash_command()
 async def add_wallet(ctx, address: str):
-    await ctx.response.defer()
+    await ctx.response.defer(ephemeral=True)
     try:
         #check if address is valid
         if len(address) != 42:
@@ -151,7 +151,7 @@ async def add_wallet(ctx, address: str):
 @bot.slash_command()
 async def remove_wallet(ctx, address: str):
     try:
-        await ctx.response.defer()
+        await ctx.response.defer(ephemeral=True)
         # Remove wallet from mysql database
         users = session.query(User).filter_by(user_id=ctx.author.id).all()
         if len(users) == 0:
@@ -185,88 +185,6 @@ async def list_wallets(ctx):
                 for wallet in wallets:
                     wallet_list += wallet.address + "\n"
                 await ctx.followup.send(wallet_list, ephemeral=True)
-    except Exception as e:
-        print(e)
-        await ctx.followup.send("Something went wrong")
-
-@bot.slash_command()
-async def pnl_profit(ctx, token: str,  exchange: str, roi: float, entry: float, exit: float, type: str = commands.Param(choices=["Short", "Long"])):
-    try:
-        await ctx.response.defer()
-
-        user_id = ctx.author.id
-        user_avatar = ctx.author.display_avatar
-        user_name = ctx.author.name + "#" + ctx.author.discriminator
-
-
-        await generate_image_PNL(token, type, exchange, ROI, entry, exit,  user_id, user_avatar, user_name)
-        await ctx.followup.send(file=disnake.File(f'PNL{user_id}.png'))
-    except Exception as e:
-        print(e)
-        await ctx.followup.send("Something went wrong")
-
-
-
-
-@bot.slash_command()
-async def profit_history(ctx, days: int):
-    await ctx.response.defer()
-
-    count_buy = 0
-    count_sell = 0
-    count_mint = 0
-    profit = 0
-    sellprice = []
-    buyprice = []
-
-    user_id = ctx.author.id
-
-    # get 7d profit
-    timestamp = int(time.time())
-    x_days_ago = timestamp - days * 24 * 60 * 60
-
-    get_block_url = f"https://api.etherscan.io/api?module=block&action=getblocknobytime&timestamp={x_days_ago}&closest=before&apikey={os.getenv('ETHERSCAN_KEY')}"
-    block = requests.get(get_block_url).json()["result"]
-
-
-    users = session.query(User).filter_by(user_id=ctx.author.id).all()
-    if len(users) == 0:
-        await ctx.followup.send("You don't have any wallets")
-    else:
-        wallets = session.query(Wallet).filter_by(user_id=ctx.author.id).all()
-        if len(wallets) == 0:
-            await ctx.followup.send("You don't have any wallets")
-
-        else:
-            for wallet in wallets:
-                address = wallet.address
-
-                count_mint_temp, count_buy_temp, count_sell_temp, buyprice_temp, sellprice_temp,  profit_temp = await get_x_day_profit(address.lower(), block, x_days_ago)
-                count_mint += count_mint_temp
-                count_buy += count_buy_temp
-                count_sell += count_sell_temp
-                profit += profit_temp
-                buyprice.extend(buyprice_temp)
-                sellprice.extend(sellprice_temp)
-
-            if count_buy == 0 and count_sell == 0 and count_mint == 0:
-                await ctx.followup.send("No transactions found")
-                return
-
-            await generate_image_time(count_mint, count_buy, count_sell, profit, user_id, timestamp)
-            await ctx.followup.send(file=disnake.File(f'profit_time{user_id}.png'))
-
-@bot.slash_command()
-async def manual_profit(ctx, type: str, amount: int, price_buy: float, price_sell: float):
-    try:
-        await ctx.response.defer()
-        user_id = ctx.author.id
-        user_avatar = ctx.author.display_avatar
-        user_name = ctx.author.name + "#" + ctx.author.discriminator
-        await ctx.response.defer()
-        user_id = ctx.author.id
-        await generate_image_manual(type, amount, price_buy, price_sell, user_name, user_avatar, user_id)
-        await ctx.followup.send(file=disnake.File(f'manual{user_id}.png'))
     except Exception as e:
         print(e)
         await ctx.followup.send("Something went wrong")
