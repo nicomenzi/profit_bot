@@ -27,17 +27,33 @@ async def on_ready():
 
 @bot.slash_command()
 async def profit(ctx, contract_address: str):
-    #try:
+    try:
         await ctx.response.defer()
+
+        user_id = ctx.author.id
+
+        user = session.query(User).filter_by(user_id=user_id).first()
+        wallets = session.query(Wallet).filter_by(user_id=user_id).all()
+
+
+        user_avatar = ctx.author.display_avatar
+        user_name = ctx.author.name + "#" + ctx.author.discriminator
 
         #check if contract address is valid
         if len(contract_address) != 42:
             await ctx.followup.send("Invalid contract address")
             return
+        if len(wallets) == 0:
+            await ctx.followup.send("You have no wallets added")
+            return
+        if user.twitter_handle == None:
+            await ctx.followup.send("You have no twitter handle added")
+            return
 
-        user_id = ctx.author.id
-        user_avatar = ctx.author.display_avatar
-        user_name = ctx.author.name + "#" + ctx.author.discriminator
+
+
+
+
 
         count_buy = 0
         count_sell = 0
@@ -50,37 +66,34 @@ async def profit(ctx, contract_address: str):
 
 
         # Get wallets for user from mysql database
-        wallets = session.query(Wallet).filter_by(user_id=user_id).all()
-
-        if len(wallets) == 0:
-            await ctx.followup.send("You have no wallets added")
-        else:
-            # Get all transactions for all wallets
-            for wallet in wallets:
-                address = wallet.address
-                count_mint_temp, count_buy_temp, count_sell_temp, buyprice_temp, sellprice_temp,  profit_temp = await get_profit(address, contract_address.lower())
-                count_mint += count_mint_temp
-                count_buy += count_buy_temp
-                count_sell += count_sell_temp
-                profit += profit_temp
-                buyprice.extend(buyprice_temp)
-                sellprice.extend(sellprice_temp)
-            count = count_buy + count_mint
-            buy_price = sum(buyprice) / count
-            sell_price = sum(sellprice) / count_sell
-
-            project_name = await get_collection_name(contract_address.lower())
-            floor_price = await get_collection_floor_price(contract_address.lower())
-            user = session.query(User).filter_by(user_id=user_id).first()
-            potential_profit = (floor_price * (count_buy + count_mint - count_sell)) + profit
 
 
-            await generate_image(project_name=project_name, count_buy=count_buy, count_sell=count_sell, count_mint=count_mint, avg_buy_price=buy_price, avg_sell_price=sell_price, profit=profit, potential_profit=potential_profit, eth_price=eth_price, discord_id=user_id, image_url=user_avatar, user_name=user_name, twitter_handle=user.twitter_handle )
+        # Get all transactions for all wallets
+        for wallet in wallets:
+            address = wallet.address
+            count_mint_temp, count_buy_temp, count_sell_temp, buyprice_temp, sellprice_temp,  profit_temp = await get_profit(address, contract_address.lower())
+            count_mint += count_mint_temp
+            count_buy += count_buy_temp
+            count_sell += count_sell_temp
+            profit += profit_temp
+            buyprice.extend(buyprice_temp)
+            sellprice.extend(sellprice_temp)
+        count = count_buy + count_mint
+        buy_price = sum(buyprice) / count
+        sell_price = sum(sellprice) / count_sell
 
-            await ctx.followup.send(file=disnake.File(f'pil_text_font{user_id}.png'))
-    #except Exception as e:
-    #    print(e)
-    #    await ctx.followup.send("Something went wrong")
+        project_name = await get_collection_name(contract_address.lower())
+        floor_price = await get_collection_floor_price(contract_address.lower())
+
+        potential_profit = (floor_price * (count_buy + count_mint - count_sell)) + profit
+
+
+        await generate_image(project_name=project_name, count_buy=count_buy, count_sell=count_sell, count_mint=count_mint, avg_buy_price=buy_price, avg_sell_price=sell_price, profit=profit, potential_profit=potential_profit, eth_price=eth_price, discord_id=user_id, image_url=user_avatar, user_name=user_name, twitter_handle=user.twitter_handle )
+
+        await ctx.followup.send(file=disnake.File(f'profit{user_id}.png'))
+    except Exception as e:
+        print(e)
+        await ctx.followup.send("Something went wrong")
 
 @bot.slash_command()
 async def add_twitter_handle(ctx, handle: str):

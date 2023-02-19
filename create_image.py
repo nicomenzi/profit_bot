@@ -96,7 +96,7 @@ async def generate_image(project_name, count_buy, count_sell, count_mint, avg_bu
 
 
 
-        img.save(f'pil_text_font{discord_id}.png')
+        img.save(f'profit{discord_id}.png')
 
 
 async def generate_image_time(count_mint, count_buy, count_sell, profit, discord_id, timestamp):
