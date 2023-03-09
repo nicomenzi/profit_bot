@@ -30,10 +30,17 @@ async def profit(ctx, contract_address: str):
     #try:
         await ctx.response.defer()
 
+
         #check if contract address is valid
         if len(contract_address) != 42:
             await ctx.followup.send("Invalid contract address")
             return
+
+        user = session.query(User).filter_by(user_id=ctx.author.id).first()
+        if user.twitter_handle == None:
+            await ctx.followup.send("You need to add your twitter handle first")
+            return
+
 
         user_id = ctx.author.id
         user_avatar = ctx.author.display_avatar
@@ -66,12 +73,14 @@ async def profit(ctx, contract_address: str):
                 buyprice.extend(buyprice_temp)
                 sellprice.extend(sellprice_temp)
             count = count_buy + count_mint
+            if count == 0:
+                await ctx.followup.send("You have no transactions for this collection")
+                return
             buy_price = sum(buyprice) / count
             sell_price = sum(sellprice) / count_sell
 
             project_name = await get_collection_name(contract_address.lower())
             floor_price = await get_collection_floor_price(contract_address.lower())
-            user = session.query(User).filter_by(user_id=user_id).first()
             potential_profit = (floor_price * (count_buy + count_mint - count_sell)) + profit
 
 
@@ -85,8 +94,7 @@ async def profit(ctx, contract_address: str):
 @bot.slash_command()
 async def add_twitter_handle(ctx, handle: str):
     await ctx.response.defer()
-    #split handle to remove @
-    handle = handle.split("@")[1]
+
     # Add twitter handle to mysql database
     users = session.query(User).filter_by(user_id=ctx.author.id).all()
     if len(users) == 0:

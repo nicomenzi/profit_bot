@@ -1,9 +1,7 @@
-from PIL import Image, ImageDraw, ImageFont
-import requests
-from io import BytesIO
 import requests
 from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
+from decimal import Decimal
 
 async def center_text_title(d: ImageDraw, text: str, x: int, y: int) -> tuple:
     font_size = 35
@@ -15,7 +13,7 @@ async def center_text_title(d: ImageDraw, text: str, x: int, y: int) -> tuple:
     return x_start, y_start
 
 async def center_text_stats(d: ImageDraw, text: str, x: int, y: int) -> tuple:
-    font_size = 28
+    font_size = 32
     font_type = "OpenSans-Bold.ttf"
     font = ImageFont.truetype(font_type, font_size)
     text_width, text_height = d.textsize(text, font=font)
@@ -37,7 +35,7 @@ async def center_text_pnl(d: ImageDraw, text: str, x: int, y: int) -> tuple:
 
 async def generate_image(project_name, count_buy, count_sell, count_mint, avg_buy_price, avg_sell_price, profit,
                           potential_profit, image_url, user_name, eth_price,discord_id, twitter_handle ):
-    with Image.open("background2.png") as img:
+    with Image.open("background_new.png") as img:
 
 
         avg_buy_price = round(avg_buy_price, 2)
@@ -51,32 +49,26 @@ async def generate_image(project_name, count_buy, count_sell, count_mint, avg_bu
         d = ImageDraw.Draw(img)
         font_size =35
         font_size_pnl = 45
-        font_size_stats = 28
-        font_type = "OpenSans-Bold.ttf"
+        font_size_stats = 32
+        font_type = "./PressStart2P-Regular.ttf"
 
 
         # fnt = ImageFont.truetype('Pillow/Tests/fonts/FreeMono.ttf', 40)
-        x,y = await center_text_title(d, project_name, 600, 350)
-        d.text((x, y), project_name, font=ImageFont.truetype(font_type, font_size), fill=(206, 122, 38))
-        x,y = await center_text_stats(d, str(count_buy), 494, 407)
+
+        d.text((344, 431), project_name, font=ImageFont.truetype(font_type, font_size), fill=(206, 122, 38), anchor="ra")
         d.text((x, y),str(count_buy),font=ImageFont.truetype(font_type, font_size_stats), fill=(256, 256, 256))
-        x,y = await center_text_stats(d, str(count_mint), 494, 457)
         d.text((x, y), str(count_mint),font=ImageFont.truetype(font_type, font_size_stats), fill=(256, 256, 256))
-        x,y = await center_text_stats(d, str(avg_buy_price)+ " Ξ" , 494, 514)
         d.text((x, y), str(avg_buy_price)+ " Ξ",font=ImageFont.truetype(font_type, font_size_stats), fill=(256, 256, 256))
-        x,y = await center_text_stats(d, str(avg_sell_price)+ " Ξ", 494, 569)
         d.text((x, y), str(avg_sell_price) + " Ξ",font=ImageFont.truetype(font_type, font_size_stats), fill=(256, 256, 256))
-        x,y = await center_text_stats(d, str(count_buy + count_mint - count_sell), 494, 654)
         d.text((x, y), str(count_buy + count_mint - count_sell),font=ImageFont.truetype(font_type, font_size_stats), fill=(256, 256, 256))
-        x,y = await center_text_stats(d, str(profit) + " Ξ", 494, 717)
         d.text((x, y), str(profit) + " Ξ",font=ImageFont.truetype(font_type, font_size_stats), fill=(256, 256, 256))
 
         x,y = await center_text_pnl(d, str(profit) + " Ξ(" + str(round(float(profit)*float(eth_price),2)) + "$)", 895, 551)
         d.text((x, y), str(profit) + " Ξ(" + str(round(float(profit)*float(eth_price),2)) + "$)",font=ImageFont.truetype(font_type, font_size_pnl), fill=(0, 225, 0))
 
         if avg_buy_price > 0:
-            x, y = await center_text_pnl(d, str(profit / potential_profit * 100) + "%", 895, 613)
-            d.text((x, y), str(profit / potential_profit * 100) + "%",font=ImageFont.truetype(font_type, font_size_pnl), fill=(0, 225, 0))
+            x, y = await center_text_pnl(d, str(Decimal(potential_profit / avg_buy_price * 100).to_integral()) + "%", 895, 613)
+            d.text((x, y), str(Decimal(potential_profit / avg_buy_price * 100).to_integral()) + "%",font=ImageFont.truetype(font_type, font_size_pnl), fill=(0, 225, 0))
         else:
             x, y = await center_text_pnl(d, " ∞ %", 895, 613)
             d.text((x, y), " ∞ %",font=ImageFont.truetype(font_type, font_size_pnl), fill=(0, 225, 0))
