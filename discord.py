@@ -27,7 +27,7 @@ async def on_ready():
 
 @bot.slash_command()
 async def profit(ctx, contract_address: str):
-    #try:
+    try:
         await ctx.response.defer()
 
 
@@ -87,9 +87,9 @@ async def profit(ctx, contract_address: str):
             await generate_image(project_name=project_name, count_buy=count_buy, count_sell=count_sell, count_mint=count_mint, avg_buy_price=buy_price, avg_sell_price=sell_price, profit=profit, potential_profit=potential_profit, eth_price=eth_price, discord_id=user_id, image_url=user_avatar, user_name=user_name, twitter_handle=user.twitter_handle )
 
             await ctx.followup.send(file=disnake.File(f'pil_text_font{user_id}.png'))
-    #except Exception as e:
-    #    print(e)
-    #    await ctx.followup.send("Something went wrong")
+    except Exception as e:
+        print(e)
+        await ctx.followup.send("Something went wrong")
 
 @bot.slash_command()
 async def add_twitter_handle(ctx, handle: str):
@@ -184,103 +184,101 @@ async def list_wallets(ctx):
         print(e)
         await ctx.followup.send("Something went wrong")
 
-@bot.slash_command()
-async def pnl_profit(ctx, token: str,  exchange: str, roi: float, entry: float, exit: float, type: str = commands.Param(choices=["Short", "Long"])):
-    try:
-        await ctx.response.defer()
-
-        user_id = ctx.author.id
-        user_avatar = ctx.author.display_avatar
-        user_name = ctx.author.name + "#" + ctx.author.discriminator
-
-
-        await generate_image_PNL(token, type, exchange, ROI, entry, exit,  user_id, user_avatar, user_name)
-        await ctx.followup.send(file=disnake.File(f'PNL{user_id}.png'))
-    except Exception as e:
-        print(e)
-        await ctx.followup.send("Something went wrong")
-
-
-
-
-@bot.slash_command()
-async def profit_history(ctx, days: int):
-    await ctx.response.defer()
-
-    count_buy = 0
-    count_sell = 0
-    count_mint = 0
-    profit = 0
-    sellprice = []
-    buyprice = []
-
-    user_id = ctx.author.id
-
-    # get 7d profit
-    timestamp = int(time.time())
-    x_days_ago = timestamp - days * 24 * 60 * 60
-
-    get_block_url = f"https://api.etherscan.io/api?module=block&action=getblocknobytime&timestamp={x_days_ago}&closest=before&apikey={os.getenv('ETHERSCAN_KEY')}"
-    block = requests.get(get_block_url).json()["result"]
-
-
-    users = session.query(User).filter_by(user_id=ctx.author.id).all()
-    if len(users) == 0:
-        await ctx.followup.send("You don't have any wallets")
-    else:
-        wallets = session.query(Wallet).filter_by(user_id=ctx.author.id).all()
-        if len(wallets) == 0:
-            await ctx.followup.send("You don't have any wallets")
-
-        else:
-            for wallet in wallets:
-                address = wallet.address
-
-                count_mint_temp, count_buy_temp, count_sell_temp, buyprice_temp, sellprice_temp,  profit_temp = await get_x_day_profit(address.lower(), block, x_days_ago)
-                count_mint += count_mint_temp
-                count_buy += count_buy_temp
-                count_sell += count_sell_temp
-                profit += profit_temp
-                buyprice.extend(buyprice_temp)
-                sellprice.extend(sellprice_temp)
-
-            if count_buy == 0 and count_sell == 0 and count_mint == 0:
-                await ctx.followup.send("No transactions found")
-                return
-
-            await generate_image_time(count_mint, count_buy, count_sell, profit, user_id, timestamp)
-            await ctx.followup.send(file=disnake.File(f'profit_time{user_id}.png'))
-
-@bot.slash_command()
-async def manual_profit(ctx, type: str, amount: int, price_buy: float, price_sell: float):
-    try:
-        await ctx.response.defer()
-        user_id = ctx.author.id
-        user_avatar = ctx.author.display_avatar
-        user_name = ctx.author.name + "#" + ctx.author.discriminator
-        await ctx.response.defer()
-        user_id = ctx.author.id
-        await generate_image_manual(type, amount, price_buy, price_sell, user_name, user_avatar, user_id)
-        await ctx.followup.send(file=disnake.File(f'manual{user_id}.png'))
-    except Exception as e:
-        print(e)
-        await ctx.followup.send("Something went wrong")
+# @bot.slash_command()
+# async def pnl_profit(ctx, token: str,  exchange: str, roi: float, entry: float, exit: float, type: str = commands.Param(choices=["Short", "Long"])):
+#     try:
+#         await ctx.response.defer()
+#
+#         user_id = ctx.author.id
+#         user_avatar = ctx.author.display_avatar
+#         user_name = ctx.author.name + "#" + ctx.author.discriminator
+#
+#
+#         await generate_image_PNL(token, type, exchange, ROI, entry, exit,  user_id, user_avatar, user_name)
+#         await ctx.followup.send(file=disnake.File(f'PNL{user_id}.png'))
+#     except Exception as e:
+#         print(e)
+#         await ctx.followup.send("Something went wrong")
 
 
 
-@bot.slash_command()
-async def help(ctx):
-    await ctx.response.defer()
-    await ctx.followup.send("Commands: \n"
-                            "/add_wallet <address> - Add a wallet \n"
-                            "/remove_wallet <address> - Remove a wallet\n"
-                            "/list_wallets - List all your wallets\n"
-                            "/profit_history <days> - Get profit history for the last x days \n"
-                            "/manual_profit- Get profit for a profit of any kind\n"
-                            "/profit - Get profit for all of your wallets from a certain collection \n"
-                            "/help - Show help \n")
+
+# @bot.slash_command()
+# async def profit_history(ctx, days: int):
+#     await ctx.response.defer()
+#
+#     count_buy = 0
+#     count_sell = 0
+#     count_mint = 0
+#     profit = 0
+#     sellprice = []
+#     buyprice = []
+#
+#     user_id = ctx.author.id
+#
+#     # get 7d profit
+#     timestamp = int(time.time())
+#     x_days_ago = timestamp - days * 24 * 60 * 60
+#
+#     get_block_url = f"https://api.etherscan.io/api?module=block&action=getblocknobytime&timestamp={x_days_ago}&closest=before&apikey={os.getenv('ETHERSCAN_KEY')}"
+#     block = requests.get(get_block_url).json()["result"]
+#
+#
+#     users = session.query(User).filter_by(user_id=ctx.author.id).all()
+#     if len(users) == 0:
+#         await ctx.followup.send("You don't have any wallets")
+#     else:
+#         wallets = session.query(Wallet).filter_by(user_id=ctx.author.id).all()
+#         if len(wallets) == 0:
+#             await ctx.followup.send("You don't have any wallets")
+#
+#         else:
+#             for wallet in wallets:
+#                 address = wallet.address
+#
+#                 count_mint_temp, count_buy_temp, count_sell_temp, buyprice_temp, sellprice_temp,  profit_temp = await get_x_day_profit(address.lower(), block, x_days_ago)
+#                 count_mint += count_mint_temp
+#                 count_buy += count_buy_temp
+#                 count_sell += count_sell_temp
+#                 profit += profit_temp
+#                 buyprice.extend(buyprice_temp)
+#                 sellprice.extend(sellprice_temp)
+#
+#             if count_buy == 0 and count_sell == 0 and count_mint == 0:
+#                 await ctx.followup.send("No transactions found")
+#                 return
+#
+#             await generate_image_time(count_mint, count_buy, count_sell, profit, user_id, timestamp)
+#             await ctx.followup.send(file=disnake.File(f'profit_time{user_id}.png'))
+
+# @bot.slash_command()
+# async def manual_profit(ctx, type: str, amount: int, price_buy: float, price_sell: float):
+#     try:
+#         await ctx.response.defer()
+#         user_id = ctx.author.id
+#         user_avatar = ctx.author.display_avatar
+#         user_name = ctx.author.name + "#" + ctx.author.discriminator
+#         await ctx.response.defer()
+#         user_id = ctx.author.id
+#         await generate_image_manual(type, amount, price_buy, price_sell, user_name, user_avatar, user_id)
+#         await ctx.followup.send(file=disnake.File(f'manual{user_id}.png'))
+#     except Exception as e:
+#         print(e)
+#         await ctx.followup.send("Something went wrong")
+#
 
 
+# @bot.slash_command()
+# async def help(ctx):
+#     await ctx.response.defer()
+#     await ctx.followup.send("Commands: \n"
+#                             "/add_wallet [address] \n"
+#                             "/remove_wallet [address] \n"
+#                             "/list_wallets \n"
+#                             "/help \n"
+#                             )
+#
+#
 
 if __name__ == '__main__':
     bot.run(os.getenv('DISCORD_TOKEN'))

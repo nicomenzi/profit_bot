@@ -47,44 +47,41 @@ async def generate_image(project_name, count_buy, count_sell, count_mint, avg_bu
 
         # Display project name, buy count, sell count, and profit in image
         d = ImageDraw.Draw(img)
-        font_size =35
-        font_size_pnl = 45
-        font_size_stats = 32
+        font_size =96
+        font_size_pnl = 80
+        font_size_stats = 60
         font_type = "./PressStart2P-Regular.ttf"
 
 
         # fnt = ImageFont.truetype('Pillow/Tests/fonts/FreeMono.ttf', 40)
 
-        d.text((344, 431), project_name, font=ImageFont.truetype(font_type, font_size), fill=(206, 122, 38), anchor="ra")
-        d.text((x, y),str(count_buy),font=ImageFont.truetype(font_type, font_size_stats), fill=(256, 256, 256))
-        d.text((x, y), str(count_mint),font=ImageFont.truetype(font_type, font_size_stats), fill=(256, 256, 256))
-        d.text((x, y), str(avg_buy_price)+ " Ξ",font=ImageFont.truetype(font_type, font_size_stats), fill=(256, 256, 256))
-        d.text((x, y), str(avg_sell_price) + " Ξ",font=ImageFont.truetype(font_type, font_size_stats), fill=(256, 256, 256))
-        d.text((x, y), str(count_buy + count_mint - count_sell),font=ImageFont.truetype(font_type, font_size_stats), fill=(256, 256, 256))
-        d.text((x, y), str(profit) + " Ξ",font=ImageFont.truetype(font_type, font_size_stats), fill=(256, 256, 256))
-
-        x,y = await center_text_pnl(d, str(profit) + " Ξ(" + str(round(float(profit)*float(eth_price),2)) + "$)", 895, 551)
-        d.text((x, y), str(profit) + " Ξ(" + str(round(float(profit)*float(eth_price),2)) + "$)",font=ImageFont.truetype(font_type, font_size_pnl), fill=(0, 225, 0))
-
+        d.text((1200, 568), project_name, font=ImageFont.truetype(font_type, font_size), fill=(206, 122, 38), anchor="mm")
+        d.text((1082, 926),str(count_buy),font=ImageFont.truetype(font_type, font_size_stats), fill=(256, 256, 256), anchor="rb")
+        d.text((1082, 1058), str(count_mint),font=ImageFont.truetype(font_type, font_size_stats), fill=(256, 256, 256),anchor="rb")
+        d.text((1082, 1192), str(avg_buy_price)+ " Ξ",font=ImageFont.truetype(font_type, font_size_stats), fill=(256, 256, 256), anchor="rb")
+        d.text((1082, 1332), str(avg_sell_price) + " Ξ",font=ImageFont.truetype(font_type, font_size_stats), fill=(256, 256, 256), anchor="rb")
+        d.text((1082, 1516), str(count_buy + count_mint - count_sell),font=ImageFont.truetype(font_type, font_size_stats), fill=(256, 256, 256), anchor="rb")
+        d.text((1082, 1646), str(profit) + " Ξ",font=ImageFont.truetype(font_type, font_size_stats), fill=(256, 256, 256), anchor="rb")
+        #
+        d.text((1774, 1232), str(profit) + " Ξ",font=ImageFont.truetype(font_type, font_size_pnl), fill=(0, 225, 0), anchor="mb")
+        d.text((1774, 1428),"" + str(round(float(profit)*float(eth_price),2)) + "$",font=ImageFont.truetype(font_type, font_size_pnl), fill=(0, 225, 0), anchor="mb")
         if avg_buy_price > 0:
-            x, y = await center_text_pnl(d, str(Decimal(potential_profit / avg_buy_price * 100).to_integral()) + "%", 895, 613)
-            d.text((x, y), str(Decimal(potential_profit / avg_buy_price * 100).to_integral()) + "%",font=ImageFont.truetype(font_type, font_size_pnl), fill=(0, 225, 0))
+            d.text((1774, 1624), str(Decimal(potential_profit / avg_buy_price * 100).to_integral()) + "%",font=ImageFont.truetype(font_type, font_size_pnl), fill=(0, 225, 0), anchor="mb")
         else:
-            x, y = await center_text_pnl(d, " ∞ %", 895, 613)
-            d.text((x, y), " ∞ %",font=ImageFont.truetype(font_type, font_size_pnl), fill=(0, 225, 0))
+             d.text((1774, 1624), " ∞ %",font=ImageFont.truetype(font_type, font_size_pnl), fill=(0, 225, 0),  anchor="mb")
 
 
 
-        d.text((667, 870), user_name,font=ImageFont.truetype(font_type, 45), fill=(221, 174, 92))
-        d.text((667, 812), "@"+twitter_handle,font=ImageFont.truetype(font_type, 45), fill=(221, 174, 92))
+        d.text((2022, 1998), user_name,font=ImageFont.truetype(font_type, 45), fill=(221, 174, 92), anchor="rb")
+        d.text((2022, 1902), "@"+twitter_handle,font=ImageFont.truetype(font_type, 45), fill=(221, 174, 92), anchor="rb")
 
 
-        # Get the image from the URL and resize it to 30 pixels
+        #Get the image from the URL and resize it to 30 pixels
         response = requests.get(image_url)
-        img_to_paste = Image.open(BytesIO(response.content)).resize((166, 166))
+        img_to_paste = Image.open(BytesIO(response.content)).resize((230, 230))
 
         # Paste the image onto the generated image
-        img.paste(img_to_paste, (1004, 790))
+        img.paste(img_to_paste, (2060, 1818))
 
 
 
