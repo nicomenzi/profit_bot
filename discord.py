@@ -83,7 +83,10 @@ async def profit(ctx, contract_address: str):
                 await ctx.followup.send("You have no transactions for this collection")
                 return
             buy_price = sum(buyprice) / count
-            sell_price = sum(sellprice) / count_sell
+            if count_sell == 0:
+                sell_price = 0
+            else:
+                sell_price = sum(sellprice) / count_sell
 
             project_name = await get_collection_name(contract_address.lower())
             floor_price = await get_collection_floor_price(contract_address.lower())
