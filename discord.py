@@ -29,6 +29,10 @@ async def on_ready():
 async def profit(ctx, contract_address: str):
     try:
         await ctx.response.defer()
+        user_id = ctx.author.id
+        wallets = session.query(Wallet).filter_by(user_id=user_id).all()
+
+
 
 
         #check if contract address is valid
@@ -40,9 +44,12 @@ async def profit(ctx, contract_address: str):
         if user.twitter_handle == None:
             await ctx.followup.send("You need to add your twitter handle first")
             return
+        if len(wallets) == 0:
+            await ctx.followup.send("You have no wallets added")
+            return
 
 
-        user_id = ctx.author.id
+
         user_avatar = ctx.author.display_avatar
         user_name = ctx.author.name + "#" + ctx.author.discriminator
 
@@ -57,7 +64,6 @@ async def profit(ctx, contract_address: str):
 
 
         # Get wallets for user from mysql database
-        wallets = session.query(Wallet).filter_by(user_id=user_id).all()
 
         if len(wallets) == 0:
             await ctx.followup.send("You have no wallets added")
@@ -91,7 +97,7 @@ async def profit(ctx, contract_address: str):
         print(e)
         await ctx.followup.send("Something went wrong")
 
-@bot.slash_command()
+@bot.slash_command(description="Add your twitter handle withouth the @")
 async def add_twitter_handle(ctx, handle: str):
     await ctx.response.defer()
 
