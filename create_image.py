@@ -58,12 +58,12 @@ async def generate_image(project_name, count_buy, count_sell, count_mint, avg_bu
         d.text((1200, 568), project_name, font=ImageFont.truetype(font_type, font_size), fill=(206, 122, 38), anchor="mm")
         d.text((1082, 926),str(count_buy),font=ImageFont.truetype(font_type, font_size_stats), fill=(256, 256, 256), anchor="rb")
         d.text((1082, 1058), str(count_mint),font=ImageFont.truetype(font_type, font_size_stats), fill=(256, 256, 256),anchor="rb")
-        d.text((1082, 1192), str(avg_buy_price)+ " Ξ",font=ImageFont.truetype(font_type, font_size_stats), fill=(256, 256, 256), anchor="rb")
-        d.text((1082, 1332), str(avg_sell_price) + " Ξ",font=ImageFont.truetype(font_type, font_size_stats), fill=(256, 256, 256), anchor="rb")
+        d.text((1082, 1192), str(avg_buy_price)+ "Ξ",font=ImageFont.truetype(font_type, font_size_stats), fill=(256, 256, 256), anchor="rb")
+        d.text((1082, 1332), str(avg_sell_price) + "Ξ",font=ImageFont.truetype(font_type, font_size_stats), fill=(256, 256, 256), anchor="rb")
         d.text((1082, 1516), str(count_buy + count_mint - count_sell),font=ImageFont.truetype(font_type, font_size_stats), fill=(256, 256, 256), anchor="rb")
-        d.text((1082, 1646), str(profit) + " Ξ",font=ImageFont.truetype(font_type, font_size_stats), fill=(256, 256, 256), anchor="rb")
+        d.text((1082, 1646), str(profit) + "Ξ",font=ImageFont.truetype(font_type, font_size_stats), fill=(256, 256, 256), anchor="rb")
         #
-        d.text((1774, 1232), str(profit) + " Ξ",font=ImageFont.truetype(font_type, font_size_pnl), fill=(0, 225, 0), anchor="mb")
+        d.text((1774, 1232), str(profit) + "Ξ",font=ImageFont.truetype(font_type, font_size_pnl), fill=(0, 225, 0), anchor="mb")
         d.text((1774, 1428),"" + str(round(float(profit)*float(eth_price),2)) + "$",font=ImageFont.truetype(font_type, font_size_pnl), fill=(0, 225, 0), anchor="mb")
         if avg_buy_price > 0:
             d.text((1774, 1624), str(Decimal(potential_profit / avg_buy_price * 100).to_integral()) + "%",font=ImageFont.truetype(font_type, font_size_pnl), fill=(0, 225, 0), anchor="mb")
