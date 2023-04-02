@@ -47,7 +47,10 @@ async def generate_image(project_name, count_buy, count_sell, count_mint, avg_bu
 
         # Display project name, buy count, sell count, and profit in image
         d = ImageDraw.Draw(img)
-        font_size =96
+        if len(project_name) > 20:
+            font_size = 80
+        else:
+            font_size = 96
         font_size_pnl = 80
         font_size_stats = 60
         font_type = "./PressStart2P-Regular.ttf"
